@@ -28,14 +28,14 @@ public class MockController {
     )
     public Object postBalances(@RequestBody RequestDTO requestDTO) {
 
-        String clientId;
-        String currency;
-        int balance;
-        int maxLimit;
+        ResponseDTO responseDTO;
 
         try {
-            clientId = requestDTO.getClientId();
+            String clientId = requestDTO.getClientId();
             char firstDigit = clientId.charAt(0);
+
+            String currency;
+            int maxLimit;
 
             if (firstDigit == '8') {
                 currency = "US";
@@ -47,23 +47,37 @@ public class MockController {
                 currency = "RUB";
                 maxLimit = 10000;
             }
-            balance = random.nextInt(maxLimit);
+            int balance = random.nextInt(maxLimit);
+
+            responseDTO = new ResponseDTO(
+                    requestDTO.getRqUID(),
+                    clientId,
+                    requestDTO.getAccount(),
+                    currency,
+                    new BigDecimal(balance),
+                    new BigDecimal(maxLimit)
+            );
+
+            Thread.sleep(random.nextInt(1000, 2000));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            responseDTO = new ResponseDTO();
         } catch (Exception e) {
-            log.error(String.format("********** RequestDTO **********\n%s", mapper.writerWithDefaultPrettyPrinter().writeValueAsString(requestDTO)));
+            log.error(String.format(
+                    "********** RequestDTO **********\n%s",
+                    mapper.writerWithDefaultPrettyPrinter().writeValueAsString(requestDTO))
+            );
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
 
-        ResponseDTO responseDTO = new ResponseDTO(
-                requestDTO.getRqUID(),
-                clientId,
-                requestDTO.getAccount(),
-                currency,
-                new BigDecimal(balance),
-                new BigDecimal(maxLimit)
+        log.info(String.format(
+                "********** RequestDTO **********\n%s",
+                mapper.writerWithDefaultPrettyPrinter().writeValueAsString(requestDTO))
         );
-
-        log.info(String.format("********** RequestDTO **********\n%s", mapper.writerWithDefaultPrettyPrinter().writeValueAsString(requestDTO)));
-        log.info(String.format("********** ResponseDTO **********\n%s", mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseDTO)));
+        log.info(String.format(
+                "********** ResponseDTO **********\n%s",
+                mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseDTO))
+        );
 
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
